@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toshkent amaliy fanlar universiteti — Ma'lumotlar bazasi</title>
+
+  <!-- Supabase va Word import kutubxonalari -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8fafc, #ffffff, #ecfdf5);
+      color: #0f172a;
+    }
+
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .header-inner {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      background: #047857;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      box-shadow: 0 8px 20px rgba(4, 120, 87, 0.25);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: white;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 3px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 16px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: #047857;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #065f46;
+    }
+
+    .btn-dark {
+      background: #0f172a;
+      color: white;
+    }
+
+    .btn-light {
+      background: white;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-danger {
+      background: #e11d48;
+      color: white;
+    }
+
+    .btn-muted {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 34px 16px;
+    }
+
+    .hero h1 {
+      font-size: clamp(34px, 6vw, 58px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 12px;
+    }
+
+    .hero-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hero-title svg {
+      width: 34px;
+      height: 34px;
+      color: #047857;
+      flex-shrink: 0;
+    }
+
+    .hero p {
+      max-width: 650px;
+      color: #64748b;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 32px;
+    }
+
+    .section-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 30px;
+      padding: 28px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+      transition: 0.25s;
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .section-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 35px rgba(15, 23, 42, 0.11);
+    }
+
+    .section-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 22px;
+      background: #d1fae5;
+      color: #047857;
+      display: grid;
+      place-items: center;
+      margin-bottom: 30px;
+    }
+
+    .section-icon svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .section-card h2 {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .section-card p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .inside-toolbar {
+      position: sticky;
+      top: 73px;
+      z-index: 80;
+      background: rgba(248, 250, 252, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      margin: -34px -16px 0;
+      padding: 12px 16px;
+    }
+
+    .toolbar-inner {
+      max-width: 1150px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .left-tools {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      color: #0f172a;
+      display: grid;
+      place-items: center;
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .toolbar-title h1 {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .toolbar-title span {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .right-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 670px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      height: 45px;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 0 15px 0 43px;
+      outline: none;
+      font-size: 15px;
+      background: white;
+    }
+
+    .search-wrap input:focus {
+      border-color: #047857;
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.14);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .search-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .cards-list {
+      padding-top: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .info-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 27px;
+      padding: 23px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .info-card h2 {
+      font-size: 25px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+
+    .info-card p {
+      color: #334155;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      font-size: 15.5px;
+    }
+
+    .admin-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: none;
+      background: #f1f5f9;
+      color: #334155;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .icon-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .icon-btn:hover {
+      background: #d1fae5;
+      color: #047857;
+    }
+
+    .icon-btn.delete:hover {
+      background: #ffe4e6;
+      color: #e11d48;
+    }
+
+    .empty-box,
+    .loading-box {
+      margin-top: 22px;
+      background: white;
+      border: 1px dashed #cbd5e1;
+      border-radius: 30px;
+      padding: 48px 20px;
+      text-align: center;
+      color: #64748b;
+    }
+
+    .empty-box h2,
+    .loading-box h2 {
+      color: #0f172a;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(7px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 470px;
+      background: white;
+      border-radius: 30px;
+      padding: 22px;
+      box-shadow: 0 25px 70px rgba(15, 23, 42, 0.24);
+      max-height: 90vh;
+      overflow: auto;
+      animation: pop 0.18s ease-out;
+    }
+
+    .modal.wide {
+      max-width: 720px;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-head h2 {
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    .close-btn {
+      width: 39px;
+      height: 39px;
+      border: none;
+      border-radius: 14px;
+      background: #f1f5f9;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .form-group {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #475569;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 13px 14px;
+      outline: none;
+      font-size: 15px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 210px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #047857;
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.14);
+    }
+
+    .modal-note {
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 250;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 520px;
+      background: #0f172a;
+      color: white;
+      padding: 14px 45px 14px 16px;
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 700;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.25);
+      display: none;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .toast button {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 850px) {
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar-inner {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .right-tools {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .brand-title {
+        font-size: 15px;
+      }
+
+      .brand-subtitle {
+        font-size: 12px;
+      }
+
+      .logo-box {
+        width: 42px;
+        height: 42px;
+      }
+
+      .btn span.mobile-hide {
+        display: none;
+      }
+
+      .right-tools {
+        flex-wrap: wrap;
+      }
+
+      .search-wrap {
+        flex-basis: 100%;
+      }
+
+      .section-card {
+        min-height: 190px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo-box" id="logoBox">TAFU</div>
+        <div>
+          <div class="brand-title">Toshkent amaliy fanlar universiteti</div>
+          <div class="brand-subtitle">Ma'lumotlar bazasi</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="editLoginBtn" onclick="openCodeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock-keyhole">
+          <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="1"></circle>
+        </svg>
+        <span class="mobile-hide">Edit</span>
+      </button>
+      <button class="btn btn-dark hidden" id="editLogoutBtn" onclick="logoutAdmin()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out">
+          <path d="m16 17 5-5-5-5"></path>
+          <path d="M21 12H9"></path>
+          <path d="M13 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8"></path>
+        </svg>
+        <span class="mobile-hide">Chiqish</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="homePage">
+      <div class="hero">
+        <h1 class="hero-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-database">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path>
+            <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"></path>
+          </svg>
+          <span>Ma'lumotlar bazasi</span>
+        </h1>
+        <p>Foydalanuvchi kerakli bo'limga kiradi, ma'lumotlarni karta ko'rinishida o'qiydi va qidiruv orqali tez topadi.</p>
+      </div>
+
+      <div class="section-grid">
+        <div class="section-card" onclick="openSection('script')">
+          <div>
+            <div class="section-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-text">
+                <path d="M12 7v14"></path>
+                <path d="M3 18a2 2 0 0 1 2-2h7"></path>
+                <path d="M21 18a2 2 0 0 0-2-2h-7"></path>
+                <path d="M5 2a2 2 0 0 0-2 2v14"></path>
+                <path d="M19 2a2 2 0 0 1 2 2v14"></path>
+                <path d="M9 10h6"></path>
+                <path d="M9 14h6"></path>
+              </svg>
+            </div>
+            <h2>Script</h2>
+            <p>Operatorlar uchun tayyor javoblar, institut haqida ma'lumotlar va suhbat scriptlari.</p>
+          </div>
+        </div>
+
+        <div class="section-card" onclick="openSection('qabul')">
+          <div>
+            <div class="section-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap">
+                <path d="M21.42 10.922a1 1 0 0 0 0-1.844l-8-4a1 1 0 0 0-.894 0l-8 4a1 1 0 0 0 0 1.844l8 4a1 1 0 0 0 .894 0z"></path>
+                <path d="M22 10v6"></path>
+                <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
+              </svg>
+            </div>
+            <h2>Qabul</h2>
+            <p>Qabul jarayoni, hujjatlar, yo'nalishlar, kontrakt va to'lov bo'yicha ma'lumotlar.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="insidePage" class="hidden">
+      <div class="inside-toolbar">
+        <div class="toolbar-inner">
+          <div class="left-tools">
+            <button class="back-btn" onclick="goBack()" aria-label="Orqaga">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left">
+                <path d="m12 19-7-7 7-7"></path>
+                <path d="M19 12H5"></path>
+              </svg>
+            </button>
+            <div class="toolbar-title">
+              <h1 id="sectionTitle">Script</h1>
+              <span id="itemsCount">0 ta ma'lumot</span>
+            </div>
+          </div>
+
+          <div class="right-tools">
+            <div class="search-wrap">
+              <span class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.3-4.3"></path>
+                </svg>
+              </span>
+              <input id="searchInput" type="text" placeholder="Qidiruv..." oninput="renderItems()" />
+            </div>
+
+            <button class="btn btn-primary admin-only hidden" onclick="openFormModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
+                <path d="M5 12h14"></path>
+                <path d="M12 5v14"></path>
+              </svg>
+              <span class="mobile-hide">Qo'shish</span>
+            </button>
+            <button class="btn btn-dark admin-only hidden" onclick="document.getElementById('wordInput').click()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="M10 9H8"></path>
+                <path d="M16 13H8"></path>
+                <path d="M16 17H8"></path>
+              </svg>
+              <span class="mobile-hide">Word</span>
+            </button>
+            <input id="wordInput" type="file" accept=".doc,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" onchange="importWordFile(event)" />
+          </div>
+        </div>
+      </div>
+
+      <div id="loadingBox" class="loading-box hidden">
+        <h2>Yuklanmoqda...</h2>
+        <p>Ma'lumotlar Supabase bazasidan olinmoqda.</p>
+      </div>
+
+      <div id="emptyBox" class="empty-box hidden">
+        <h2>Hozircha ma'lumot yo'q</h2>
+        <p>Edit orqali ma'lumot qo'shing yoki Word fayldan import qiling.</p>
+      </div>
+
+      <div class="cards-list" id="cardsList"></div>
+    </section>
+  </main>
+
+  <!-- Edit kodi modal -->
+  <div class="modal-overlay" id="codeModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Edit kodi</h2>
+        <button class="close-btn" onclick="closeModal('codeModal')">×</button>
+      </div>
+      <p class="modal-note">Ma'lumot qo'shish, tahrirlash yoki Word import qilish uchun kodni kiriting.</p>
+      <div class="form-group">
+        <label>Kod</label>
+        <input type="password" id="adminCodeInput" placeholder="Kodni kiriting" onkeydown="if(event.key === 'Enter') loginAdmin()" />
+      </div>
+      <button class="btn btn-primary" style="width: 100%;" onclick="loginAdmin()">Kirish</button>
+    </div>
+  </div>
+
+  <!-- Qo'shish / tahrirlash modal -->
+  <div class="modal-overlay" id="formModal">
+    <div class="modal wide">
+      <div class="modal-head">
+        <h2 id="formModalTitle">Yangi ma'lumot qo'shish</h2>
+        <button class="close-btn" onclick="closeModal('formModal')">×</button>
+      </div>
+
+      <input type="hidden" id="itemId" />
+
+      <div class="form-group">
+        <label>Bo'lim</label>
+        <select id="itemSection">
+          <option value="script">Script</option>
+          <option value="qabul">Qabul</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Sarlavha</label>
+        <input id="itemTitle" type="text" placeholder="Masalan: Institut haqida" />
+      </div>
+
+      <div class="form-group">
+        <label>Ma'lumot</label>
+        <textarea id="itemContent" placeholder="Ma'lumot matnini shu yerga yozing..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Tartib raqami</label>
+        <input id="itemSort" type="number" value="0" />
+      </div>
+
+      <button class="btn btn-primary" style="width: 100%;" onclick="saveItem()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-save">
+          <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
+          <path d="M17 21v-7H7v7"></path>
+          <path d="M7 3v5h8"></path>
+        </svg>
+        Saqlash
+      </button>
+    </div>
+  </div>
+
+  <!-- O'chirish modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>O'chirishni tasdiqlang</h2>
+        <button class="close-btn" onclick="closeModal('deleteModal')">×</button>
+      </div>
+      <p class="modal-note">Bu ma'lumot bazadan o'chiriladi. Davom etasizmi?</p>
+      <div class="modal-actions">
+        <button class="btn btn-muted" onclick="closeModal('deleteModal')">Bekor qilish</button>
+        <button class="btn btn-danger" onclick="deleteItem()">O'chirish</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <span id="toastText"></span>
+    <button onclick="hideToast()">×</button>
+  </div>
+
+  <script>
+    // Supabase ma'lumotlari
+    const SUPABASE_URL = "https://ykfgmbbqxjerutstrtnk.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_sDdIHknU63_ED-EKyv_YVA_c20POoSx";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Agar logo rasmi bo'lsa shu yerga URL yozing. Masalan: "logo.png"
+    const LOGO_URL = "";
+
+    let activeSection = null;
+    let allItems = [];
+    let isAdmin = false;
+    let adminCode = localStorage.getItem("taf_kb_admin_code") || "";
+    let deleteTargetId = null;
+
+    const sectionNames = {
+      script: "Script",
+      qabul: "Qabul"
+    };
+
+    window.addEventListener("load", function () {
+      if (LOGO_URL) {
+        document.getElementById("logoBox").innerHTML = `<img src="${LOGO_URL}" alt="TAFU logo">`;
+      }
+
+      if (adminCode) {
+        document.getElementById("adminCodeInput").value = adminCode;
+      }
+    });
+
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastText").textContent = text;
+      toast.classList.add("show");
+      setTimeout(hideToast, 4500);
+    }
+
+    function hideToast() {
+      document.getElementById("toast").classList.remove("show");
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("show");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("show");
+    }
+
+    function openCodeModal() {
+      openModal("codeModal");
+      setTimeout(() => document.getElementById("adminCodeInput").focus(), 100);
+    }
+
+    function loginAdmin() {
+      const code = document.getElementById("adminCodeInput").value.trim();
+      if (!code) {
+        showToast("Avval edit kodini yozing.");
+        return;
+      }
+
+      adminCode = code;
+      localStorage.setItem("taf_kb_admin_code", adminCode);
+      isAdmin = true;
+      closeModal("codeModal");
+      updateAdminUI();
+      showToast("Tahrirlash rejimi yoqildi.");
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      adminCode = "";
+      localStorage.removeItem("taf_kb_admin_code");
+      document.getElementById("adminCodeInput").value = "";
+      updateAdminUI();
+      showToast("Tahrirlash rejimi o'chirildi.");
+    }
+
+    function updateAdminUI() {
+      document.getElementById("editLoginBtn").classList.toggle("hidden", isAdmin);
+      document.getElementById("editLogoutBtn").classList.toggle("hidden", !isAdmin);
+
+      document.querySelectorAll(".admin-only").forEach(function (el) {
+        el.classList.toggle("hidden", !isAdmin);
+      });
+
+      renderItems();
+    }
+
+    async function openSection(section) {
+      activeSection = section;
+      document.getElementById("homePage").classList.add("hidden");
+      document.getElementById("insidePage").classList.remove("hidden");
+      document.getElementById("sectionTitle").textContent = sectionNames[section];
+      document.getElementById("searchInput").value = "";
+      await loadItems();
+    }
+
+    function goBack() {
+      activeSection = null;
+      allItems = [];
+      document.getElementById("insidePage").classList.add("hidden");
+      document.getElementById("homePage").classList.remove("hidden");
+    }
+
+    async function loadItems() {
+      if (!activeSection) return;
+
+      document.getElementById("loadingBox").classList.remove("hidden");
+      document.getElementById("emptyBox").classList.add("hidden");
+      document.getElementById("cardsList").innerHTML = "";
+
+      const { data, error } = await db
+        .from("knowledge_items")
+        .select("id, section, title, content, sort_order, created_at, updated_at")
+        .eq("section", activeSection)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+
+      document.getElementById("loadingBox").classList.add("hidden");
+
+      if (error) {
+        showToast(error.message || "Ma'lumotlarni yuklashda xatolik.");
+        return;
+      }
+
+      allItems = data || [];
+      renderItems();
+    }
+
+    function renderItems() {
+      const cardsList = document.getElementById("cardsList");
+      const emptyBox = document.getElementById("emptyBox");
+      const search = document.getElementById("searchInput")?.value.toLowerCase().trim() || "";
+
+      if (!activeSection) return;
+
+      const filtered = allItems.filter(function (item) {
+        const fullText = `${item.title} ${item.content}`.toLowerCase();
+        return fullText.includes(search);
+      });
+
+      document.getElementById("itemsCount").textContent = `${filtered.length} ta ma'lumot`;
+      cardsList.innerHTML = "";
+
+      if (filtered.length === 0) {
+        emptyBox.classList.remove("hidden");
+        return;
+      }
+
+      emptyBox.classList.add("hidden");
+
+      filtered.forEach(function (item) {
+        const card = document.createElement("article");
+        card.className = "info-card";
+
+        const actions = isAdmin ? `
+          <div class="admin-actions">
+            <button class="icon-btn" title="Tahrirlash" onclick='openFormModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+              </svg>
+            </button>
+            <button class="icon-btn delete" title="O'chirish" onclick="confirmDelete('${item.id}')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2">
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4h8v2"></path>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+              </svg>
+            </button>
+          </div>
+        ` : "";
+
+        card.innerHTML = `
+          <div class="card-head">
+            <h2>${escapeHtml(item.title)}</h2>
+            ${actions}
+          </div>
+          <p>${escapeHtml(item.content)}</p>
+        `;
+
+        cardsList.appendChild(card);
+      });
+    }
+
+    function openFormModal(item = null) {
+      if (!isAdmin) {
+        openCodeModal();
+        return;
+      }
+
+      document.getElementById("formModalTitle").textContent = item ? "Ma'lumotni tahrirlash" : "Yangi ma'lumot qo'shish";
+      document.getElementById("itemId").value = item?.id || "";
+      document.getElementById("itemSection").value = item?.section || activeSection || "script";
+      document.getElementById("itemTitle").value = item?.title || "";
+      document.getElementById("itemContent").value = item?.content || "";
+      document.getElementById("itemSort").value = item?.sort_order || allItems.length || 0;
+
+      openModal("formModal");
+    }
+
+    async function saveItem() {
+      if (!isAdmin) {
+        openCodeModal();
+        return;
+      }
+
+      const id = document.getElementById("itemId").value || null;
+      const section = document.getElementById("itemSection").value;
+      const title = document.getElementById("itemTitle").value.trim();
+      const content = document.getElementById("itemContent").value.trim();
+      const sortOrder = Number(document.getElementById("itemSort").value || 0);
+
+      if (!title || !content) {
+        showToast("Sarlavha va ma'lumot matnini to'ldiring.");
+        return;
+      }
+
+      const { error } = await db.rpc("kb_upsert_item", {
+        admin_code: adminCode,
+        p_id: id,
+        p_section: section,
+        p_title: title,
+        p_content: content,
+        p_sort_order: sortOrder
+      });
+
+      if (error) {
+        showToast(error.message || "Saqlashda xatolik.");
+        return;
+      }
+
+      closeModal("formModal");
+      showToast("Ma'lumot saqlandi.");
+
+      if (section !== activeSection) {
+        activeSection = section;
+        document.getElementById("sectionTitle").textContent = sectionNames[section];
+      }
+
+      await loadItems();
+    }
+
+    function confirmDelete(id) {
+      if (!isAdmin) {
+        openCodeModal();
+        return;
+      }
+
+      deleteTargetId = id;
+      openModal("deleteModal");
+    }
+
+    async function deleteItem() {
+      if (!deleteTargetId) return;
+
+      const { error } = await db.rpc("kb_delete_item", {
+        admin_code: adminCode,
+        p_id: deleteTargetId
+      });
+
+      if (error) {
+        showToast(error.message || "O'chirishda xatolik.");
+        return;
+      }
+
+      closeModal("deleteModal");
+      deleteTargetId = null;
+      showToast("Ma'lumot o'chirildi.");
+      await loadItems();
+    }
+
+    async function importWordFile(event) {
+      if (!isAdmin) {
+        openCodeModal();
+        return;
+      }
+
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        showToast("Word fayl import qilinmoqda...");
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        const importedItems = splitImportedHtmlToItems(result.value, activeSection || "script");
+
+        if (!importedItems.length) {
+          showToast("Word fayldan ma'lumot topilmadi.");
+          return;
+        }
+
+        for (const item of importedItems) {
+          const { error } = await db.rpc("kb_upsert_item", {
+            admin_code: adminCode,
+            p_id: null,
+            p_section: item.section,
+            p_title: item.title,
+            p_content: item.content,
+            p_sort_order: item.sort_order
+          });
+
+          if (error) throw error;
+        }
+
+        showToast(`${importedItems.length} ta karta Word fayldan import qilindi.`);
+        await loadItems();
+      } catch (error) {
+        showToast(error.message || "Word importda xatolik.");
+      }
+
+      event.target.value = "";
+    }
+
+    function splitImportedHtmlToItems(html, section) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const nodes = Array.from(doc.body.children);
+      const items = [];
+      let current = null;
+
+      nodes.forEach(function (node) {
+        const tag = node.tagName.toLowerCase();
+        const text = (node.textContent || "").trim();
+        if (!text) return;
+
+        const looksLikeHeading = ["h1", "h2", "h3", "h4"].includes(tag) || (text.length <= 80 && !/[.!?]$/.test(text));
+
+        if (looksLikeHeading) {
+          if (current && current.content.trim()) {
+            items.push(current);
+          }
+          current = {
+            section: section,
+            title: text,
+            content: "",
+            sort_order: items.length
+          };
+        } else {
+          if (!current) {
+            current = {
+              section: section,
+              title: "Import qilingan ma'lumot",
+              content: "",
+              sort_order: items.length
+            };
+          }
+          current.content += text + "\n\n";
+        }
+      });
+
+      if (current && (current.title.trim() || current.content.trim())) {
+        items.push(current);
+      }
+
+      return items.map(function (item, index) {
+        return {
+          section: item.section,
+          title: item.title,
+          content: item.content.trim() || item.title,
+          sort_order: index
+        };
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
