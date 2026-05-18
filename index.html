@@ -1151,38 +1151,126 @@
 
     function splitImportedHtmlToItems(html, section) {
       const doc = new DOMParser().parseFromString(html, "text/html");
-      const nodes = Array.from(doc.body.children);
+      const blocks = Array.from(doc.body.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6"));
       const items = [];
       let current = null;
 
-      nodes.forEach(function (node) {
-        const tag = node.tagName.toLowerCase();
-        const text = (node.textContent || "").trim();
-        if (!text) return;
+      function normalizeText(text) {
+        return String(text || "")
+          .replace(/\u00a0/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
 
-        const looksLikeHeading = ["h1", "h2", "h3", "h4"].includes(tag) || (text.length <= 80 && !/[.!?]$/.test(text));
+      function normalizeLineText(text) {
+        return String(text || "")
+          .replace(/\u00a0/g, " ")
+          .replace(/[ \t]+/g, " ")
+          .trim();
+      }
 
-        if (looksLikeHeading) {
-          if (current && current.content.trim()) {
-            items.push(current);
-          }
+      function startNewItem(title, content) {
+        if (current && (current.title.trim() || current.content.trim())) {
+          items.push(current);
+        }
+
+        current = {
+          section: section,
+          title: normalizeText(title) || "Import qilingan ma'lumot",
+          content: normalizeText(content) || "",
+          sort_order: items.length
+        };
+      }
+
+      function appendContent(text) {
+        const normalized = normalizeLineText(text);
+        if (!normalized) return;
+
+        if (!current) {
           current = {
             section: section,
-            title: text,
+            title: "Import qilingan ma'lumot",
             content: "",
             sort_order: items.length
           };
-        } else {
-          if (!current) {
-            current = {
-              section: section,
-              title: "Import qilingan ma'lumot",
-              content: "",
-              sort_order: items.length
-            };
-          }
-          current.content += text + "\n\n";
         }
+
+        current.content = current.content
+          ? `${current.content}\n${normalized}`
+          : normalized;
+      }
+
+      function extractLinesFromNode(node) {
+        const lines = [];
+        let lineContainer = document.createElement("div");
+
+        function pushCurrentLine() {
+          lines.push(lineContainer);
+          lineContainer = document.createElement("div");
+        }
+
+        function appendChildToLine(child) {
+          lineContainer.appendChild(child.cloneNode(true));
+        }
+
+        Array.from(node.childNodes).forEach(function walk(child) {
+          if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === "br") {
+            pushCurrentLine();
+            return;
+          }
+
+          appendChildToLine(child);
+        });
+
+        pushCurrentLine();
+        return lines;
+      }
+
+      function isHeadingLine(lineNode, fallbackTag) {
+        const fullText = normalizeLineText(lineNode.textContent);
+        if (!fullText) return false;
+
+        if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(fallbackTag)) {
+          return true;
+        }
+
+        const textNodes = Array.from(lineNode.childNodes).filter(function (child) {
+          return child.nodeType === Node.TEXT_NODE && normalizeLineText(child.textContent);
+        });
+
+        if (textNodes.length > 0) {
+          return false;
+        }
+
+        const elementChildren = Array.from(lineNode.children).filter(function (child) {
+          return normalizeLineText(child.textContent);
+        });
+
+        if (!elementChildren.length) {
+          return false;
+        }
+
+        return elementChildren.every(function (child) {
+          const childTag = child.tagName.toLowerCase();
+          return childTag === "strong" || childTag === "b";
+        });
+      }
+
+      blocks.forEach(function (node) {
+        const tag = node.tagName.toLowerCase();
+        const lines = extractLinesFromNode(node);
+
+        lines.forEach(function (lineNode) {
+          const lineText = normalizeLineText(lineNode.textContent);
+          if (!lineText) return;
+
+          if (isHeadingLine(lineNode, tag)) {
+            startNewItem(lineText, "");
+            return;
+          }
+
+          appendContent(lineText);
+        });
       });
 
       if (current && (current.title.trim() || current.content.trim())) {
