@@ -673,7 +673,7 @@
           </div>
         </div>
 
-        <div class="section-card" onclick="openSection('qabul')">
+        <div class="section-card" onclick="openSection('sales')">
           <div>
             <div class="section-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap">
@@ -682,8 +682,8 @@
                 <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path>
               </svg>
             </div>
-            <h2>Qabul</h2>
-            <p>Qabul jarayoni, hujjatlar, yo'nalishlar, kontrakt va to'lov bo'yicha ma'lumotlar.</p>
+            <h2>Sotuv</h2>
+            <p>Sotuv bo'limi uchun tayyor javoblar, e'tirozlar bilan ishlash va follow-up matnlari.</p>
           </div>
         </div>
       </div>
@@ -782,7 +782,7 @@
         <label>Bo'lim</label>
         <select id="itemSection">
           <option value="script">Script</option>
-          <option value="qabul">Qabul</option>
+          <option value="sales">Sotuv</option>
         </select>
       </div>
 
@@ -837,6 +837,9 @@
     const SUPABASE_URL = "https://arqkpxszrxnernwviwdy.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_FMTgyGG_GZ7um48G01ZZiA_LcB1a3ZD";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const NOTES_TABLE = "admission_notes";
+    const UNIVERSITY_ID = "bd475c46-3c2e-42ee-be31-d6ab9ece42e0";
+    const DEFAULT_LANGUAGE = "uz";
 
     // Agar logo rasmi bo'lsa shu yerga URL yozing. Masalan: "logo.png"
     const LOGO_URL = "";
@@ -849,7 +852,19 @@
 
     const sectionNames = {
       script: "Script",
-      qabul: "Qabul"
+      sales: "Sotuv",
+      qabul: "Sotuv"
+    };
+
+    const sectionCategories = {
+      script: "script",
+      sales: "sales",
+      qabul: "sales"
+    };
+
+    const categorySections = {
+      script: "script",
+      sales: "sales"
     };
 
     window.addEventListener("load", function () {
@@ -871,6 +886,53 @@
 
     function hideToast() {
       document.getElementById("toast").classList.remove("show");
+    }
+
+    function getFriendlyDbError(error) {
+      const message = error?.message || "";
+      if (error?.code === "PGRST205" || message.includes("public.knowledge_items")) {
+        return "Supabase jadvali topilmadi. admission_notes jadvali va RLS policylarini tekshiring.";
+      }
+
+      if (error?.code === "42703") {
+        return "Supabase ustunlari kodga mos emas. admission_notes schema'sini tekshiring.";
+      }
+
+      return message || "Bazaga ulanishda xatolik.";
+    }
+
+    function getCategoryForSection(section) {
+      return sectionCategories[section] || section || "script";
+    }
+
+    function getSectionForCategory(category) {
+      return categorySections[category] || category || "script";
+    }
+
+    function normalizeNote(row) {
+      return {
+        id: row.id,
+        university_id: row.university_id,
+        section: getSectionForCategory(row.category),
+        category: row.category,
+        language: row.language,
+        title: row.title || "",
+        content: row.body || "",
+        sort_order: row.priority || 0,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      };
+    }
+
+    function buildNotePayload(section, title, content, sortOrder) {
+      return {
+        university_id: UNIVERSITY_ID,
+        category: getCategoryForSection(section),
+        language: DEFAULT_LANGUAGE,
+        title: title,
+        body: content,
+        priority: sortOrder
+      };
     }
 
     function openModal(id) {
@@ -945,20 +1007,22 @@
       document.getElementById("cardsList").innerHTML = "";
 
       const { data, error } = await db
-        .from("knowledge_items")
-        .select("id, section, title, content, sort_order, created_at, updated_at")
-        .eq("section", activeSection)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+        .from(NOTES_TABLE)
+        .select("id, university_id, category, language, title, body, priority, created_at, updated_at")
+        .eq("category", getCategoryForSection(activeSection))
+        .eq("language", DEFAULT_LANGUAGE)
+        .order("priority", { ascending: true })
+        .order("updated_at", { ascending: false });
 
       document.getElementById("loadingBox").classList.add("hidden");
 
       if (error) {
-        showToast(error.message || "Ma'lumotlarni yuklashda xatolik.");
+        console.error("Knowledge items load failed:", error);
+        showToast(getFriendlyDbError(error));
         return;
       }
 
-      allItems = data || [];
+      allItems = (data || []).map(normalizeNote);
       renderItems();
     }
 
@@ -1053,17 +1117,14 @@
         return;
       }
 
-      const { error } = await db.rpc("kb_upsert_item", {
-        admin_code: adminCode,
-        p_id: id,
-        p_section: section,
-        p_title: title,
-        p_content: content,
-        p_sort_order: sortOrder
-      });
+      const payload = buildNotePayload(section, title, content, sortOrder);
+      const { error } = id
+        ? await db.from(NOTES_TABLE).update(payload).eq("id", id)
+        : await db.from(NOTES_TABLE).insert(payload);
 
       if (error) {
-        showToast(error.message || "Saqlashda xatolik.");
+        console.error("Knowledge item save failed:", error);
+        showToast(getFriendlyDbError(error));
         return;
       }
 
@@ -1091,13 +1152,14 @@
     async function deleteItem() {
       if (!deleteTargetId) return;
 
-      const { error } = await db.rpc("kb_delete_item", {
-        admin_code: adminCode,
-        p_id: deleteTargetId
-      });
+      const { error } = await db
+        .from(NOTES_TABLE)
+        .delete()
+        .eq("id", deleteTargetId);
 
       if (error) {
-        showToast(error.message || "O'chirishda xatolik.");
+        console.error("Knowledge item delete failed:", error);
+        showToast(getFriendlyDbError(error));
         return;
       }
 
@@ -1127,23 +1189,18 @@
           return;
         }
 
-        for (const item of importedItems) {
-          const { error } = await db.rpc("kb_upsert_item", {
-            admin_code: adminCode,
-            p_id: null,
-            p_section: item.section,
-            p_title: item.title,
-            p_content: item.content,
-            p_sort_order: item.sort_order
-          });
+        const payloads = importedItems.map(function (item) {
+          return buildNotePayload(item.section, item.title, item.content, item.sort_order);
+        });
 
-          if (error) throw error;
-        }
+        const { error } = await db.from(NOTES_TABLE).insert(payloads);
+        if (error) throw error;
 
         showToast(`${importedItems.length} ta karta Word fayldan import qilindi.`);
         await loadItems();
       } catch (error) {
-        showToast(error.message || "Word importda xatolik.");
+        console.error("Knowledge item import failed:", error);
+        showToast(getFriendlyDbError(error));
       }
 
       event.target.value = "";
